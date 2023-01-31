@@ -61,8 +61,7 @@ except:
 	print("Unable to connect: ", ibm_db.conn_errormsg())
 
 
-chicago_dataset = pd.read_csv('jcxq-k9xf.csv')
-print(chicago_dataset.dtypes.index)
+# chicago_dataset = pd.read_csv('jcxq-k9xf.csv')
 ## create table
 # createQuery = create_table_query('chicago_socioeconomic_data3', chicago_dataset)
 # ibm_db.exec_immediate(conn, createQuery)
@@ -73,10 +72,47 @@ print(chicago_dataset.dtypes.index)
 # except ValueError as ve:
 # 	print("Failed: ", ve)
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 
-income_vs_hardship = pd.read_sql("SELECT per_capita_income_, hardship_index FROM chicago_socioeconomic_data;", pconn)
+# income_vs_hardship = pd.read_sql("SELECT per_capita_income_, hardship_index FROM chicago_socioeconomic_data;", pconn)
 
-plot = sns.jointplot(x='PER_CAPITA_INCOME_',y='HARDSHIP_INDEX', data=income_vs_hardship)
-plt.show()
+# plot = sns.jointplot(x='PER_CAPITA_INCOME_',y='HARDSHIP_INDEX', data=income_vs_hardship)
+# plt.show()
+# Find the total number of crimes recorded in the CRIME table.
+p1 = "Select count(*) from CHICAGO_CRIME_DATA"
+# List community areas with per capita income less than 11000.
+p2 = "select * from census_data\
+    where per_capita_income < 11000"
+# List all case numbers for crimes involving minors?(children are not considered minors for the purposes of crime analysis)
+p3 = "select case_number from chicago_crime_data\
+    where description like '%MINOR%'"
+# List all kidnapping crimes involving a child?
+p4 = "select primary_type from chicago_crime_data\
+    where primary_type = 'KIDNAPPING'\
+        and description like '%CHILD%'"
+# What kinds of crimes were recorded at schools?
+p5 = "select primary_type from chicago_crime_data\
+    where location_description like '%SCHOOL%'"
+# List the average safety score for each type of school.
+p6 = "select distinct \"Elementary, Middle, or High School\", avg(safety_score) from SCHOOLS\
+    group by \"Elementary, Middle, or High School\""
+# List 5 community areas with highest % of households below poverty line
+p7 = "select * from chicago_socioeconomic_data\
+	order by PERCENT_HOUSEHOLDS_BELOW_POVERTY desc limit 5"
+# Which community area is most crime prone?
+p8 = "select count(COMMUNITY_AREA_NUMBER) as ca from CHICAGO_CRIME_DATA\
+	group by COMMUNITY_AREA_NUMBER\
+    	order by ca desc\
+            limit 1"
+# Use a sub-query to find the name of the community area with highest hardship index
+p9 = "select community_area_name from census_data\
+	where hardship_index = (select max(hardship_index) from census_data)"
+# Use a sub-query to determine the Community Area Name with most number of crimes?
+p10 = "select community_area_name from census_data\
+	where community_area_number = (select COMMUNITY_AREA_NUMBER from CHICAGO_CRIME_DATA\
+        group by COMMUNITY_AREA_NUMBER\
+	        order by count(COMMUNITY_AREA_NUMBER) desc\
+	            limit 1)"
+pd.set_option('display.max_rows', None)
+print(pd.read_sql(p10, pconn))
